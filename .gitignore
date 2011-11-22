@@ -1,0 +1,7 @@
+
+*.user
+*.suo
+/bin
+/obj
+/DOTNETMF_FS_EMULATION
+/OnBoardFlash.dat
