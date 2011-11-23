@@ -19,7 +19,7 @@ namespace GhostDrive
 
         static OutputPort _Led = new OutputPort((Cpu.Pin)FEZ_Pin.Digital.LED, _LedState);
 
-        static FloppySynth _LocalSynth = new FloppySynth(FEZ_Pin.Digital.IO43, PWM.Pin.PWM4, FEZ_Pin.Digital.IO41, PWM.Pin.PWM5, 1);
+        static FloppySynth _LocalSynth = new FloppySynth(FEZ_Pin.Digital.IO43, PWM.Pin.PWM4, FEZ_Pin.Digital.IO41, FEZ_Pin.Digital.IO2, 1) { OctaveModulation = -1 };
 
         public static void Main()
         {

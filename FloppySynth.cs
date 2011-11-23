@@ -13,11 +13,12 @@ namespace GhostDrive
     class FloppySynth
     {
         PWM _Step;
-        //TODO: remove PWM requirement?
-        PWM _Dir;
+        OutputPort _Dir;
         InterruptPort _Interrupt;
         OutputPort _Disable;
         byte _TrackLocation;
+
+        public int OctaveModulation = 0;
 
         /// <summary>
         /// Creates a floppy synth instance
@@ -27,17 +28,17 @@ namespace GhostDrive
         /// <param name="interruptPin">The interrupt-capable IO pin connected to the /step signal (to drive the dir pin)</param>
         /// <param name="dirPin">The PWM-capable pin connected to the dir signal</param>
         /// <param name="trackLocation"></param>
-        public FloppySynth(FEZ_Pin.Digital disablePin, PWM.Pin stepPin, FEZ_Pin.Digital interruptPin, PWM.Pin dirPin, byte trackLocation)
+        public FloppySynth(FEZ_Pin.Digital disablePin, PWM.Pin stepPin, FEZ_Pin.Digital interruptPin, FEZ_Pin.Digital dirPin, byte trackLocation)
         {
             var dirState = false;
-            _Interrupt = new InterruptPort((Cpu.Pin)interruptPin, false, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeLow);
+            _Interrupt = new InterruptPort((Cpu.Pin)interruptPin, false, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeHigh);
             _Step = new PWM(stepPin);
-            _Dir = new PWM(dirPin);
+            _Dir = new OutputPort((Cpu.Pin)dirPin, dirState);
             //when the interrupt is triggered, toggle the direction
             _Interrupt.OnInterrupt += (d1, d2, t) =>
             {
                 dirState = !dirState;
-                _Dir.Set(dirState);
+                _Dir.Write(dirState);
             };
             _Interrupt.EnableInterrupt();
             _Disable = new OutputPort((Cpu.Pin)disablePin, true);
@@ -63,7 +64,7 @@ namespace GhostDrive
             Enable();
             _TrackLocation = trackLocation;
             //just for fun we run it back and forth just to see something happen.
-            _Dir.Set(false);
+            _Dir.Write(false);
             for (int i = 0; i < 90; i++)
             {
                 _Step.Set(true);
@@ -71,7 +72,7 @@ namespace GhostDrive
                 _Step.Set(false);
                 Thread.Sleep(1);
             }
-            _Dir.Set(true);
+            _Dir.Write(true);
             for (int i = 0; i < 90; i++)
             {
                 _Step.Set(true);
@@ -79,7 +80,7 @@ namespace GhostDrive
                 _Step.Set(false);
                 Thread.Sleep(1);
             }
-            _Dir.Set(false);
+            _Dir.Write(false);
             for (int i = 0; i < _TrackLocation; i++)
             {
                 _Step.Set(true);
@@ -114,8 +115,7 @@ namespace GhostDrive
         /// <param name="note"></param>
         public void PlayNote(int note)
         {
-            //TODO: make octave lowering an option (currently lowering it by one octave to avoid stepping too fast)
-            var frequency = GetFrequencyForNote(note) / 2;
+            var frequency = GetFrequencyForNote(note) * System.Math.Pow(2, OctaveModulation);
             var period = 1.0/frequency; //seconds
             var nanoseconds = (uint)(period * 1000000000);
             //TODO: what's the right configuration for the pulse to make the direction interrupt stable?

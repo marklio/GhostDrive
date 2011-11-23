@@ -30,7 +30,7 @@ namespace GhostDrive
         public void ParseFile(string path)
         {
             //Pre-allocate or reuse array
-            NoteEvents = NoteEvents ?? new NoteEvent[500];
+            NoteEvents = NoteEvents ?? new NoteEvent[250];
             NoteCount = 0;
             Tempo = 500000;
 
