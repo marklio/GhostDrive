@@ -40,7 +40,7 @@ namespace GhostDrive
                 BurnTrackChunk(); //The first track is typically metadata
                 ReadTrackChunk();
             }
-            Debug.Print("Read " + NoteCount + " notes");
+            Util.DebugPrint("Read " + NoteCount + " notes");
         }
 
         //buffer for reading values
@@ -125,26 +125,26 @@ namespace GhostDrive
                 {
                     // Read format - 0 = single track, 1 = multiple track, 2 = multiple song
                     Format = ReadWord();
-                    Debug.Print("Format " + Format);
+                    Util.DebugPrint("Format " + Format);
 
                     // Read number of tracks that follow the header chunk
                     TrackCount = ReadWord();
-                    Debug.Print("TrackCount " + TrackCount);
+                    Util.DebugPrint("TrackCount " + TrackCount);
 
                     // Read the division (ticks per beat)
                     TicksPerBeat = ReadWord();
-                    Debug.Print("TicksPerBeat " + TicksPerBeat);
+                    Util.DebugPrint("TicksPerBeat " + TicksPerBeat);
 
                     return true;
                 }
                 else
                 {
-                    Debug.Print("Header length wasn't 6! - " + length);
+                    Util.DebugPrint("Header length wasn't 6! - " + length);
                 }
             }
             else
             {
-                Debug.Print("Didn't read the header magic word!");
+                Util.DebugPrint("Didn't read the header magic word!");
             }
 
             return false;
@@ -168,7 +168,7 @@ namespace GhostDrive
             {
                 // Read track length
                 trackLength = ReadDWord();
-                Debug.Print("Track Length: " + trackLength);
+                Util.DebugPrint("Track Length: " + trackLength);
 
                 _TrackStart = _File.Position;
                 _TrackEnd = _TrackStart + trackLength;
@@ -181,7 +181,7 @@ namespace GhostDrive
             }
             else
             {
-                Debug.Print("Didn't find magic number for track chunk");
+                Util.DebugPrint("Didn't find magic number for track chunk");
             }
 
             return false;
@@ -203,7 +203,7 @@ namespace GhostDrive
             {
                 // Read track length
                 trackLength = ReadDWord();
-                Debug.Print("Track Length: " + trackLength);
+                Util.DebugPrint("Track Length: " + trackLength);
 
                 _File.Seek(trackLength, SeekOrigin.Current);
 
@@ -211,7 +211,7 @@ namespace GhostDrive
             }
             else
             {
-                Debug.Print("Didn't find magic number for track chunk");
+                Util.DebugPrint("Didn't find magic number for track chunk");
             }
 
             return false;
@@ -229,17 +229,17 @@ namespace GhostDrive
             if (eventType == 0xF0 ||
                 eventType == 0xF7)
             {
-                Debug.Print("Sys Ex Event");
+                Util.DebugPrint("Sys Ex Event");
                 ReadSysExEvent();
             }
             else if (eventType == 0xFF)
             {
-                Debug.Print("Meta Event");
+                Util.DebugPrint("Meta Event");
                 ReadMetaEvent();
             }
             else
             {
-                Debug.Print("Midi Event");
+                Util.DebugPrint("Midi Event");
                 ReadMidiEvent(eventType, deltaTime);
             }
         }
@@ -281,7 +281,7 @@ namespace GhostDrive
             if ((eventType & 0xF0) == 0x80)
             {
                 // Note Off
-                Debug.Print("Note Off: ");// + parm1.ToString());
+                Util.DebugPrint("Note Off: ");// + parm1.ToString());
                 parm2 = ReadByte();
 
                 AddNoteEvent(noteEvent);
@@ -289,7 +289,7 @@ namespace GhostDrive
             else if ((eventType & 0xF0) == 0x90)
             {
                 // Note On
-                Debug.Print("Note On: ");// + parm1.ToString());
+                Util.DebugPrint("Note On: ");// + parm1.ToString());
                 parm2 = ReadByte();
 
                 AddNoteEvent(noteEvent);
@@ -306,7 +306,7 @@ namespace GhostDrive
                     parm2 = ReadByte();
                 }
                 // Unhandled MIDI events
-                Debug.Print("Unhandled MIDI Event: ");// + eventType.ToString());
+                Util.DebugPrint("Unhandled MIDI Event: ");// + eventType.ToString());
             }
         }
 
@@ -336,15 +336,15 @@ namespace GhostDrive
                 this.Tempo = ReadByte() << 16;
                 this.Tempo += ReadByte() << 8;
                 this.Tempo += ReadByte();
-                Debug.Print("New Tempo: ");// + this.Tempo.ToString());
+                Util.DebugPrint("New Tempo: ");// + this.Tempo.ToString());
             }
             else
             {
-                Debug.Print("Ignored Meta Event: ");//Length=" + len.ToString());
+                Util.DebugPrint("Ignored Meta Event: ");//Length=" + len.ToString());
 
                 if (metaType == 0x2f)
                 {
-                    Debug.Print("End of Track");
+                    Util.DebugPrint("End of Track");
                 }
                 _File.Seek(len, SeekOrigin.Current);
             }
@@ -359,7 +359,7 @@ namespace GhostDrive
         private uint ReadDeltaTime()
         {
             uint time = ReadVLength();
-            Debug.Print("Delta Time: ");// + time.ToString());
+            Util.DebugPrint("Delta Time: ");// + time.ToString());
             return time;
         }
 

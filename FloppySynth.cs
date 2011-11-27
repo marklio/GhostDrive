@@ -10,7 +10,7 @@ namespace GhostDrive
     /// <summary>
     /// Implements a floppy disk synthesizer
     /// </summary>
-    class FloppySynth
+    class FloppySynth : IFloppySynth
     {
         PWM _Step;
         OutputPort _Dir;
@@ -18,7 +18,7 @@ namespace GhostDrive
         OutputPort _Disable;
         byte _TrackLocation;
 
-        public int OctaveModulation = 0;
+        public int OctaveModulation { get; set; }
 
         /// <summary>
         /// Creates a floppy synth instance
