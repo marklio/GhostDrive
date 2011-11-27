@@ -4,23 +4,20 @@ using System.IO.Ports;
 
 namespace GhostDrive
 {
+    /// <summary>
+    /// Handles all remote communications for the device
+    /// </summary>
+    /// <remarks>
+    /// The device currently sends data to the slave device,
+    /// making the controller unable to tell if it is working.
+    /// TODO: consider implementing API mode on the device to
+    /// allow richer communications.
+    /// </remarks>
     class RemoteManager
     {
-
         SerialPort _Port;
         byte[] _SendBuffer = new byte[] { 0x65, 0, 0 }; //magic, type, data
         byte[] _ReceiveBuffer = new byte[3];
-
-        enum FrameType : byte
-        {
-            NoteOn = 0x10,
-            NoteOff = 0x11,
-            Enable = 0x12,
-            Disable = 0x13,
-            SetModulation = 0x20,
-            SetLocation = 0x21,
-            ResetLocation = 0x22,
-        }
 
         public RemoteManager(SerialPort serialPort)
         {

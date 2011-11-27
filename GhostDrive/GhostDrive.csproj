@@ -31,6 +31,7 @@
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
     <Compile Include="FloppySynth.cs" />
+    <Compile Include="FrameType.cs" />
     <Compile Include="IFloppySynth.cs" />
     <Compile Include="MIDIFileParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

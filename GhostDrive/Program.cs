@@ -34,6 +34,7 @@ namespace GhostDrive
             {
                 Util.DebugPrint("Found SD card");
                 _LocalSynth.Disable();
+                _RemoteSynth.Disable();
 
                 if (e.Volume.IsFormatted)
                 {
@@ -55,6 +56,7 @@ namespace GhostDrive
                         var parser = new MIDIFileParser();
                         parser.ParseFile(file);
                         _LocalSynth.Enable();
+                        _RemoteSynth.Enable();
                         Util.DebugPrint("Playing " + parser.NoteCount + " note events");
                         for (int i = 0; i < parser.NoteCount; i++)
                         {
@@ -79,6 +81,7 @@ namespace GhostDrive
                             }
                         }
                         _LocalSynth.Disable();
+                        _RemoteSynth.Disable();
                         Util.DebugPrint("Done playing");
                     }
                 }
