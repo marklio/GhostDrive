@@ -33,6 +33,9 @@
     <Compile Include="..\CommonSource\FloppySynth.cs">
       <Link>FloppySynth.cs</Link>
     </Compile>
+    <Compile Include="..\CommonSource\FrameType.cs">
+      <Link>FrameType.cs</Link>
+    </Compile>
     <Compile Include="..\CommonSource\IFloppySynth.cs">
       <Link>IFloppySynth.cs</Link>
     </Compile>
@@ -42,7 +45,6 @@
     <Compile Include="..\CommonSource\PriorityQueue.cs">
       <Link>PriorityQueue.cs</Link>
     </Compile>
-    <Compile Include="FrameType.cs" />
     <Compile Include="MIDIFileParser.cs">
       <SubType>Code</SubType>
     </Compile>

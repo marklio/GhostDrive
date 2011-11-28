@@ -1,6 +1,7 @@
 using System;
 using Microsoft.SPOT;
 using System.IO.Ports;
+using System.Threading;
 
 namespace GhostDrive
 {
@@ -18,11 +19,61 @@ namespace GhostDrive
         SerialPort _Port;
         byte[] _SendBuffer = new byte[] { 0x65, 0, 0 }; //magic, type, data
         byte[] _ReceiveBuffer = new byte[3];
+        Thread _ReadThread;
+
+        public delegate void PlaySongHandler(byte songNumber);
+        public delegate void StopSongHandler();
+
+        public event PlaySongHandler OnPlaySong;
+        public event StopSongHandler OnStopSong;
 
         public RemoteManager(SerialPort serialPort)
         {
             _Port = serialPort;
             if (!_Port.IsOpen) _Port.Open();
+            _ReadThread = new Thread(() =>
+            {
+                var readBuffer = new byte[3];
+                while (true)
+                {
+                    if (_Port.BytesToRead >= 3)
+                    {
+                        _Port.Read(readBuffer, 0, 3);
+                        if (readBuffer[0] != 0x65)
+                        {
+                            _Port.Read(readBuffer, 0, 1);
+                            continue;
+                        }
+                        switch ((FrameType)readBuffer[1])
+                        {
+                            case FrameType.PlaySong:
+                                var songNumber = readBuffer[2];
+                                PlaySong(songNumber);
+                                break;
+                            case FrameType.StopSong:
+                                StopSong();
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        Thread.Sleep(50);
+                    }
+                }
+            });
+            _ReadThread.Start();
+        }
+
+        private void StopSong()
+        {
+            var onStopSong = OnStopSong;
+            if (onStopSong != null) onStopSong();
+        }
+
+        private void PlaySong(byte songNumber)
+        {
+            var onPlaySong = OnPlaySong;
+            if (onPlaySong != null) onPlaySong(songNumber);
         }
 
         void SendFrame(FrameType type)
