@@ -25,6 +25,7 @@ namespace GhostDrive
         static RemoteManager _RemoteManager = new RemoteManager(new SerialPort("COM4", 115200, Parity.None, 8, StopBits.One));
         static IFloppySynth _RemoteSynth = _RemoteManager.RemoteSynth;
         static string _SDRoot = null;
+        static MidiFile _Song;
 
         class SynthInfo
         {
@@ -105,12 +106,10 @@ namespace GhostDrive
             Thread.Sleep(Timeout.Infinite);
         }
 
-        static Thread _PlayThread;
-
         private static void PlaySong(string songFile)
         {
             StopSong();
-            _PlayThread = new Thread(() =>
+            var t = new Thread(() =>
             {
                 string file;
                 SynthInfo[] trackMap = new SynthInfo[2];//this needs to match the number of synths we know about
@@ -133,11 +132,11 @@ namespace GhostDrive
                 }
                 Debug.Print(file);
                 Util.DebugPrint("Playing " + file);
-                var midi = new MidiFile(file);
+                _Song = new MidiFile(file);
                 var lastTime = 0u;
-                midi.NoteOn += evt =>
+                _Song.NoteOn += evt =>
                 {
-                    var timeToWait = new TimeSpan((evt.Time - lastTime) * midi.Tempo * TimeSpan.TicksPerMillisecond / 1000 / midi.TicksPerBeat);
+                    var timeToWait = new TimeSpan((evt.Time - lastTime) * _Song.Tempo * TimeSpan.TicksPerMillisecond / 1000 / _Song.TicksPerBeat);
                     Util.DebugPrint("Time To Wait: " + timeToWait.ToString());
                     Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
                     Util.DebugPrint("NOTE ON: " + evt.Note.ToString());
@@ -147,9 +146,9 @@ namespace GhostDrive
                     if (evt.TrackId == trackMap[0].TrackId)
                         _LocalSynth.PlayNote(evt.Note);
                 };
-                midi.NoteOff += evt =>
+                _Song.NoteOff += evt =>
                 {
-                    var timeToWait = new TimeSpan((evt.Time - lastTime) * midi.Tempo * TimeSpan.TicksPerMillisecond / 1000 / midi.TicksPerBeat);
+                    var timeToWait = new TimeSpan((evt.Time - lastTime) * _Song.Tempo * TimeSpan.TicksPerMillisecond / 1000 / _Song.TicksPerBeat);
                     Util.DebugPrint("Time To Wait: " + timeToWait.ToString());
                     Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
                     Util.DebugPrint("NOTE OFF: " + evt.Note.ToString());
@@ -163,18 +162,21 @@ namespace GhostDrive
                 _RemoteSynth.OctaveModulation = trackMap[1].OctaveModulation;
                 _LocalSynth.Enable();
                 _RemoteSynth.Enable();
-                midi.Play();
+
+                while (!_Song.Play()) // Handle pauses correctly
+                    Thread.Yield();
+
                 _LocalSynth.Disable();
                 _RemoteSynth.Disable();
                 Util.DebugPrint("Done playing");
             });
-            _PlayThread.Start();
+            t.Start();
         }
 
         private static void StopSong()
         {
-            //TODO: This isn't reasonable.  .Play needs to be nicely interruptable
-            if (_PlayThread != null && _PlayThread.IsAlive) _PlayThread.Abort();
+            if (_Song != null)
+                _Song.Stop();
         }
 
         /// <summary>

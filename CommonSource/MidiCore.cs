@@ -240,7 +240,12 @@ namespace Midi {
 	public delegate void NoteOnEventHandler(NoteOnEvent @event);
 
 	public class MidiFile {
-		private Track[] tracks;
+		enum State { Stopped, Playing, Paused }
+
+		FileStream stream;
+		Track[] tracks;
+		State state;
+		PriorityQueue events;
 
 		public ushort Format { get; private set; }
 		public ushort TrackCount { get; private set; }
@@ -251,31 +256,43 @@ namespace Midi {
 		public event NoteOnEventHandler NoteOn;   // Fires on note on events
 
 		public MidiFile(string path) {
-			var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, 8);
+			stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, 8);
 
-			var ch = ChunkHeader.ReadFrom(fs);
+			var ch = ChunkHeader.ReadFrom(stream);
 			if (ch.Id != 0x4d546864 || ch.Size != 6) // 'MThd'
 				throw new Exception("Malformed MIDI header");
-			Format = fs.ReadUInt16(Endianness.Big);
-			TrackCount = fs.ReadUInt16(Endianness.Big);
-			TicksPerBeat = fs.ReadUInt16(Endianness.Big);
+			Format = stream.ReadUInt16(Endianness.Big);
+			TrackCount = stream.ReadUInt16(Endianness.Big);
+			TicksPerBeat = stream.ReadUInt16(Endianness.Big);
 			Tempo = 500000;
 
 			tracks = new Track[TrackCount];
 			for (var i = (ushort)0; i < TrackCount; i++)
-				tracks[i] = Track.ReadFrom(i, fs);
+				tracks[i] = Track.ReadFrom(i, stream);
+		}
+
+		~MidiFile() {
+			stream.Dispose();
 		}
 
 #if DEVICE
 		// Fire events on all tracks in chronological order
-		public void Play() {
-            var events = new PriorityQueue(tracks.Length, (x) => ((Track)x).Current.Time);
-			foreach (var t in tracks) {
-				if (t.MoveNext())
-					events.Push(t);
+		public bool Play() {
+			switch (state) {
+			case State.Stopped:
+				events = (events ?? new PriorityQueue(tracks.Length, x => ((Track)x).Current.Time));
+				foreach (var t in tracks) {
+					if (t.MoveNext())
+						events.Push(t);
+				}
+				state = State.Playing;
+				break;
+
+			case State.Paused: return false;
+			case State.Playing: break;
 			}
 
-			while (!events.IsEmpty) {
+			while (!events.IsEmpty && state == State.Playing) {
 				var track = events.Pop() as Track;
 				var @event = track.Current;
 
@@ -289,6 +306,30 @@ namespace Midi {
 				if (track.MoveNext())
 					events.Push(track);
 			}
+
+			switch (state) {
+			case State.Stopped: return true;
+			case State.Paused: return false;
+			case State.Playing:
+				state = State.Stopped;
+				return true;
+			}
+
+			throw new Exception("invalid state!"); // Keep the compiler happy.
+		}
+
+		public void Pause() {
+			if (state == State.Playing)
+				state = State.Paused;
+		}
+
+		public void Resume() {
+			if (state == State.Paused)
+				state = State.Playing;
+		}
+
+		public void Stop() {
+			state = State.Stopped;
 		}
 #endif
 	}
