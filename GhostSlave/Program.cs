@@ -58,9 +58,8 @@ namespace GhostSlave
                         _LocalSynth.SetLocation(readBuffer[2]);
                         break;
                     case FrameType.SetModulation:
-                        var value = readBuffer[2];
-                        //TODO: fix this
-                        _LocalSynth.OctaveModulation = -1;
+                        var value = (sbyte)readBuffer[2];
+                        _LocalSynth.OctaveModulation = value;
                         break;
                 }
             }

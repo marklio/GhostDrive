@@ -11,6 +11,7 @@ using Microsoft.SPOT.IO;
 using System.IO;
 using System.IO.Ports;
 using Midi;
+using System.Collections;
 
 namespace GhostDrive
 {
@@ -23,6 +24,12 @@ namespace GhostDrive
         static IFloppySynth _LocalSynth = new FloppySynth(FEZ_Pin.Digital.IO43, PWM.Pin.PWM4, FEZ_Pin.Digital.IO41, FEZ_Pin.Digital.IO2, 1);
         static RemoteManager _RemoteManager = new RemoteManager(new SerialPort("COM4", 115200, Parity.None, 8, StopBits.One));
         static IFloppySynth _RemoteSynth = _RemoteManager.RemoteSynth;
+
+        class SynthInfo
+        {
+            public int OctaveModulation = 0;
+            public ushort TrackId = 0;
+        }
 
         public static void Main()
         {
@@ -42,21 +49,36 @@ namespace GhostDrive
                     //List the songs
                     Util.DebugPrint("Songs:");
                     var files = Directory.GetFiles(e.Volume.RootDirectory);
+                    var pq = new PriorityQueue(files.Length, x => byte.Parse(Path.GetFileNameWithoutExtension(x.ToString())));
                     foreach (var file in files)
                     {
-                        if (Path.GetExtension(file).ToLower() == ".mid")
+                        if (Path.GetExtension(file).ToLower() == ".song")
                         {
                             Util.DebugPrint(file);
+                            pq.Push(file);
                         }
                     }
                     //Play the songs
-                    //TODO: figure out the right triggers for this
-                    var pq = new PriorityQueue(files.Length, x => (x as string)[4]);
-                    foreach (var file in files)
-                        pq.Push(file);
-
                     while (!pq.IsEmpty) {
-                        var file = pq.Pop() as string;
+                        var songFile = pq.Pop() as string;
+                        string file;
+                        SynthInfo[] trackMap = new SynthInfo[2];//this needs to match the number of synths we know about
+                        using (var songReader = new StreamReader(File.OpenRead(songFile)))
+                        {
+                            file = Path.Combine(e.Volume.RootDirectory,songReader.ReadLine());
+                            string line;
+                            while ((line = songReader.ReadLine()) != null)
+                            {
+                                //it seems like ReadLine is stupid in NETMF
+                                if (line.Length == 0) break;
+                                var elements = line.Split(',');
+                                var synth = byte.Parse(elements[0]);
+                                trackMap[synth] = new SynthInfo {
+                                    TrackId = ushort.Parse(elements[1]),
+                                    OctaveModulation = elements.Length > 2 ? int.Parse(elements[2]) : 0,
+                                };
+                            }
+                        }
                         Debug.Print(file);
                         Util.DebugPrint("Playing " + file);
                         var midi = new MidiFile(file);
@@ -67,9 +89,9 @@ namespace GhostDrive
                             Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
                             Util.DebugPrint("NOTE ON: " + evt.Note.ToString());
                             lastTime = evt.Time;
-                            if (evt.TrackId == 1)
+                            if (evt.TrackId == trackMap[1].TrackId)
                                 _RemoteSynth.PlayNote(evt.Note);
-                            if (evt.TrackId == 2)
+                            if (evt.TrackId == trackMap[0].TrackId)
                                 _LocalSynth.PlayNote(evt.Note);
                         };
                         midi.NoteOff += evt => {
@@ -78,11 +100,13 @@ namespace GhostDrive
                             Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
                             Util.DebugPrint("NOTE OFF: " + evt.Note.ToString());
                             lastTime = evt.Time;
-                            if (evt.TrackId == 1)
+                            if (evt.TrackId == trackMap[1].TrackId)
                                 _RemoteSynth.StopNote();
-                            if (evt.TrackId == 2)
+                            if (evt.TrackId == trackMap[0].TrackId)
                                 _LocalSynth.StopNote();
                         };
+                        _LocalSynth.OctaveModulation = trackMap[0].OctaveModulation;
+                        _RemoteSynth.OctaveModulation = trackMap[1].OctaveModulation;
                         _LocalSynth.Enable();
                         _RemoteSynth.Enable();
                         midi.Play();
