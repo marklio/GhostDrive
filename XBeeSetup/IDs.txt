@@ -1,0 +1,13 @@
+PAN: 234
+
+master/Sequencer (controller):
+HIGH: 13A200
+LOW: 402D74A8
+
+slave:
+HIGH: 13A200
+LOW: 40341F1A
+
+Controller:
+HIGH: 13A200
+LOW: 40317BFE

@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <AssemblyName>FEZ Rhino Application</AssemblyName>
+    <AssemblyName>FEZ Mini Application</AssemblyName>
     <OutputType>Exe</OutputType>
-    <RootNamespace>GhostDrive</RootNamespace>
+    <RootNamespace>GhostSlave</RootNamespace>
     <ProjectTypeGuids>{b69e3092-b931-443c-abe7-7e7b65f2a37f};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{94CAF062-1F25-4996-845B-C5750F8A806A}</ProjectGuid>
+    <ProjectGuid>{EC183BF4-6F44-43A2-A53B-7F74FE3E3303}</ProjectGuid>
     <TargetFrameworkVersion>v4.1</TargetFrameworkVersion>
     <NetMfTargetsBaseDir Condition="'$(NetMfTargetsBaseDir)'==''">$(MSBuildExtensionsPath32)\Microsoft\.NET Micro Framework\</NetMfTargetsBaseDir>
   </PropertyGroup>
@@ -16,7 +16,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE,MF_FRAMEWORK_VERSION_V4_1,DEVICE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -24,7 +24,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE,MF_FRAMEWORK_VERSION_V4_1,DEVICE</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -33,37 +33,37 @@
     <Compile Include="..\CommonSource\FloppySynth.cs">
       <Link>FloppySynth.cs</Link>
     </Compile>
+    <Compile Include="..\CommonSource\FrameType.cs">
+      <Link>FrameType.cs</Link>
+    </Compile>
     <Compile Include="..\CommonSource\IFloppySynth.cs">
       <Link>IFloppySynth.cs</Link>
     </Compile>
-    <Compile Include="..\CommonSource\MidiCore.cs">
-      <Link>MidiCore.cs</Link>
-    </Compile>
-    <Compile Include="..\CommonSource\PriorityQueue.cs">
-      <Link>PriorityQueue.cs</Link>
-    </Compile>
-    <Compile Include="FrameType.cs" />
-    <Compile Include="MIDIFileParser.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Extensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="RemoteManager.cs" />
-    <Compile Include="Util.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="FEZRhino_GHIElectronics.NETMF.FEZ, Version=4.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="FEZMini_GHIElectronics.NETMF.FEZ, Version=4.1.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
     <Reference Include="GHIElectronics.NETMF.Hardware, Version=4.1.7.0, Culture=neutral, processorArchitecture=MSIL" />
-    <Reference Include="GHIElectronics.NETMF.IO, Version=4.1.7.0, Culture=neutral, processorArchitecture=MSIL" />
-    <Reference Include="GHIElectronics.NETMF.System, Version=4.1.7.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.SPOT.Hardware" />
     <Reference Include="Microsoft.SPOT.Hardware.SerialPort" />
-    <Reference Include="Microsoft.SPOT.IO" />
     <Reference Include="Microsoft.SPOT.Native">
     </Reference>
-    <Reference Include="System.IO" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

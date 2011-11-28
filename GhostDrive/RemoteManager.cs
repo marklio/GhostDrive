@@ -22,6 +22,7 @@ namespace GhostDrive
         public RemoteManager(SerialPort serialPort)
         {
             _Port = serialPort;
+            if (!_Port.IsOpen) _Port.Open();
         }
 
         void SendFrame(FrameType type)

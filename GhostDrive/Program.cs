@@ -10,6 +10,7 @@ using GHIElectronics.NETMF.IO;
 using Microsoft.SPOT.IO;
 using System.IO;
 using System.IO.Ports;
+using Midi;
 
 namespace GhostDrive
 {
@@ -50,36 +51,41 @@ namespace GhostDrive
                     }
                     //Play the songs
                     //TODO: figure out the right triggers for this
+                    var pq = new PriorityQueue(files.Length, x => (x as string)[4]);
                     foreach (var file in files)
-                    {
+                        pq.Push(file);
+
+                    while (!pq.IsEmpty) {
+                        var file = pq.Pop() as string;
+                        Debug.Print(file);
                         Util.DebugPrint("Playing " + file);
-                        var parser = new MIDIFileParser();
-                        parser.ParseFile(file);
-                        _LocalSynth.Enable();
-                        _RemoteSynth.Enable();
-                        Util.DebugPrint("Playing " + parser.NoteCount + " note events");
-                        for (int i = 0; i < parser.NoteCount; i++)
-                        {
-                            MIDIFileParser.NoteEvent noteEvent = parser.NoteEvents[i];
-                            TimeSpan timeToWait = new TimeSpan(noteEvent.DeltaTime * parser.Tempo * TimeSpan.TicksPerMillisecond / 1000 / parser.TicksPerBeat);
+                        var midi = new MidiFile(file);
+                        var lastTime = 0u;
+                        midi.NoteOn += evt => {
+                            var timeToWait = new TimeSpan((evt.Time - lastTime) * midi.Tempo * TimeSpan.TicksPerMillisecond / 1000 / midi.TicksPerBeat);
                             Util.DebugPrint("Time To Wait: " + timeToWait.ToString());
                             Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
-
-                            if ((noteEvent.EventType & 0xF0) == 0x80)
-                            {
-                                // Note Off
-                                Util.DebugPrint("NOTE OFF: " + noteEvent.NoteNumber.ToString());
+                            Util.DebugPrint("NOTE ON: " + evt.Note.ToString());
+                            lastTime = evt.Time;
+                            if (evt.TrackId == 1)
+                                _RemoteSynth.PlayNote(evt.Note);
+                            if (evt.TrackId == 2)
+                                _LocalSynth.PlayNote(evt.Note);
+                        };
+                        midi.NoteOff += evt => {
+                            var timeToWait = new TimeSpan((evt.Time - lastTime) * midi.Tempo * TimeSpan.TicksPerMillisecond / 1000 / midi.TicksPerBeat);
+                            Util.DebugPrint("Time To Wait: " + timeToWait.ToString());
+                            Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
+                            Util.DebugPrint("NOTE OFF: " + evt.Note.ToString());
+                            lastTime = evt.Time;
+                            if (evt.TrackId == 1)
+                                _RemoteSynth.StopNote();
+                            if (evt.TrackId == 2)
                                 _LocalSynth.StopNote();
-                                _Led.Write(false);
-                            }
-                            else if ((noteEvent.EventType & 0xF0) == 0x90)
-                            {
-                                // Note On
-                                Util.DebugPrint("NOTE ON: " + noteEvent.NoteNumber.ToString());
-                                _LocalSynth.PlayNote(noteEvent.NoteNumber);
-                                _Led.Write(true);
-                            }
-                        }
+                        };
+                        _LocalSynth.Enable();
+                        _RemoteSynth.Enable();
+                        midi.Play();
                         _LocalSynth.Disable();
                         _RemoteSynth.Disable();
                         Util.DebugPrint("Done playing");

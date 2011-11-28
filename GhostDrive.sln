@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GhostDrive", "GhostDrive\GhostDrive.csproj", "{94CAF062-1F25-4996-845B-C5750F8A806A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MIDITranscoder", "MIDITranscoder\MIDITranscoder.csproj", "{65CFCA45-B2C5-4794-990A-68ED69A4D349}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,16 +27,6 @@ Global
 		{94CAF062-1F25-4996-845B-C5750F8A806A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{94CAF062-1F25-4996-845B-C5750F8A806A}.Release|Mixed Platforms.Deploy.0 = Release|Any CPU
 		{94CAF062-1F25-4996-845B-C5750F8A806A}.Release|x86.ActiveCfg = Release|Any CPU
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Debug|x86.ActiveCfg = Debug|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Debug|x86.Build.0 = Debug|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Release|Any CPU.ActiveCfg = Release|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Release|Mixed Platforms.Build.0 = Release|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Release|x86.ActiveCfg = Release|x86
-		{65CFCA45-B2C5-4794-990A-68ED69A4D349}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
