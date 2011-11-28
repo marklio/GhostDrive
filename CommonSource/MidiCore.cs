@@ -239,7 +239,7 @@ namespace Midi {
 	public delegate void NoteOffEventHandler(NoteOffEvent @event);
 	public delegate void NoteOnEventHandler(NoteOnEvent @event);
 
-	public class MidiFile {
+	public class MidiFile : IDisposable {
 		enum State { Stopped, Playing, Paused }
 
 		FileStream stream;
@@ -271,7 +271,7 @@ namespace Midi {
 				tracks[i] = Track.ReadFrom(i, stream);
 		}
 
-		~MidiFile() {
+		void Dispose() {
 			stream.Dispose();
 		}
 

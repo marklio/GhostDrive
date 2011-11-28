@@ -132,43 +132,44 @@ namespace GhostDrive
                 }
                 Debug.Print(file);
                 Util.DebugPrint("Playing " + file);
-                _Song = new MidiFile(file);
-                var lastTime = 0u;
-                _Song.NoteOn += evt =>
-                {
-                    var timeToWait = new TimeSpan((evt.Time - lastTime) * _Song.Tempo * TimeSpan.TicksPerMillisecond / 1000 / _Song.TicksPerBeat);
-                    Util.DebugPrint("Time To Wait: " + timeToWait.ToString());
-                    Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
-                    Util.DebugPrint("NOTE ON: " + evt.Note.ToString());
-                    lastTime = evt.Time;
-                    if (evt.TrackId == trackMap[1].TrackId)
-                        _RemoteSynth.PlayNote(evt.Note);
-                    if (evt.TrackId == trackMap[0].TrackId)
-                        _LocalSynth.PlayNote(evt.Note);
-                };
-                _Song.NoteOff += evt =>
-                {
-                    var timeToWait = new TimeSpan((evt.Time - lastTime) * _Song.Tempo * TimeSpan.TicksPerMillisecond / 1000 / _Song.TicksPerBeat);
-                    Util.DebugPrint("Time To Wait: " + timeToWait.ToString());
-                    Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
-                    Util.DebugPrint("NOTE OFF: " + evt.Note.ToString());
-                    lastTime = evt.Time;
-                    if (evt.TrackId == trackMap[1].TrackId)
-                        _RemoteSynth.StopNote();
-                    if (evt.TrackId == trackMap[0].TrackId)
-                        _LocalSynth.StopNote();
-                };
-                _LocalSynth.OctaveModulation = trackMap[0].OctaveModulation;
-                _RemoteSynth.OctaveModulation = trackMap[1].OctaveModulation;
-                _LocalSynth.Enable();
-                _RemoteSynth.Enable();
+                using (_Song = new MidiFile(file)) {
+					var lastTime = 0u;
+					_Song.NoteOn += evt =>
+					{
+						var timeToWait = new TimeSpan((evt.Time - lastTime) * _Song.Tempo * TimeSpan.TicksPerMillisecond / 1000 / _Song.TicksPerBeat);
+						Util.DebugPrint("Time To Wait: " + timeToWait.ToString());
+						Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
+						Util.DebugPrint("NOTE ON: " + evt.Note.ToString());
+						lastTime = evt.Time;
+						if (evt.TrackId == trackMap[1].TrackId)
+							_RemoteSynth.PlayNote(evt.Note);
+						if (evt.TrackId == trackMap[0].TrackId)
+							_LocalSynth.PlayNote(evt.Note);
+					};
+					_Song.NoteOff += evt =>
+					{
+						var timeToWait = new TimeSpan((evt.Time - lastTime) * _Song.Tempo * TimeSpan.TicksPerMillisecond / 1000 / _Song.TicksPerBeat);
+						Util.DebugPrint("Time To Wait: " + timeToWait.ToString());
+						Thread.Sleep((int)(timeToWait.Ticks / TimeSpan.TicksPerMillisecond));
+						Util.DebugPrint("NOTE OFF: " + evt.Note.ToString());
+						lastTime = evt.Time;
+						if (evt.TrackId == trackMap[1].TrackId)
+							_RemoteSynth.StopNote();
+						if (evt.TrackId == trackMap[0].TrackId)
+							_LocalSynth.StopNote();
+					};
+					_LocalSynth.OctaveModulation = trackMap[0].OctaveModulation;
+					_RemoteSynth.OctaveModulation = trackMap[1].OctaveModulation;
+					_LocalSynth.Enable();
+					_RemoteSynth.Enable();
 
-                while (!_Song.Play()) // Handle pauses correctly
-                    Thread.Yield();
+					while (!_Song.Play()) // Handle pauses correctly
+						Thread.Yield();
 
-                _LocalSynth.Disable();
-                _RemoteSynth.Disable();
-                Util.DebugPrint("Done playing");
+					_LocalSynth.Disable();
+					_RemoteSynth.Disable();
+					Util.DebugPrint("Done playing");
+				}
             });
             t.Start();
         }
