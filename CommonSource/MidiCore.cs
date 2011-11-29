@@ -271,52 +271,57 @@ namespace Midi {
 				tracks[i] = Track.ReadFrom(i, stream);
 		}
 
-		void Dispose() {
+		public void Dispose() {
 			stream.Dispose();
 		}
 
 #if DEVICE
 		// Fire events on all tracks in chronological order
-		public bool Play() {
-			switch (state) {
-			case State.Stopped:
-				events = (events ?? new PriorityQueue(tracks.Length, x => ((Track)x).Current.Time));
-				foreach (var t in tracks) {
-					if (t.MoveNext())
-						events.Push(t);
-				}
-				state = State.Playing;
-				break;
+        public bool Play()
+        {
+            switch (state)
+            {
+                case State.Stopped:
+                    events = (events ?? new PriorityQueue(tracks.Length, x => ((Track)x).Current.Time));
+                    foreach (var t in tracks)
+                    {
+                        if (t.MoveNext())
+                            events.Push(t);
+                    }
+                    state = State.Playing;
+                    break;
 
-			case State.Paused: return false;
-			case State.Playing: break;
-			}
+                case State.Paused: return false;
+                case State.Playing: break;
+            }
 
-			while (!events.IsEmpty && state == State.Playing) {
-				var track = events.Pop() as Track;
-				var @event = track.Current;
+            while (!events.IsEmpty && state == State.Playing)
+            {
+                var track = events.Pop() as Track;
+                var @event = track.Current;
 
-				if (@event is NoteOnEvent && NoteOn != null)
-					NoteOn((NoteOnEvent)@event);
-				else if (@event is NoteOffEvent && NoteOff != null)
-					NoteOff((NoteOffEvent)@event);
-				else if (@event is SetTempoEvent)
-					Tempo = ((SetTempoEvent)@event).Tempo;
+                if (@event is NoteOnEvent && NoteOn != null)
+                    NoteOn((NoteOnEvent)@event);
+                else if (@event is NoteOffEvent && NoteOff != null)
+                    NoteOff((NoteOffEvent)@event);
+                else if (@event is SetTempoEvent)
+                    Tempo = ((SetTempoEvent)@event).Tempo;
 
-				if (track.MoveNext())
-					events.Push(track);
-			}
+                if (track.MoveNext())
+                    events.Push(track);
+            }
 
-			switch (state) {
-			case State.Stopped: return true;
-			case State.Paused: return false;
-			case State.Playing:
-				state = State.Stopped;
-				return true;
-			}
+            switch (state)
+            {
+                case State.Stopped: return true;
+                case State.Paused: return false;
+                case State.Playing:
+                    state = State.Stopped;
+                    return true;
+            }
 
-			throw new Exception("invalid state!"); // Keep the compiler happy.
-		}
+            throw new Exception("invalid state!"); // Keep the compiler happy.
+        }
 
 		public void Pause() {
 			if (state == State.Playing)

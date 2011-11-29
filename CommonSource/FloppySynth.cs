@@ -17,6 +17,9 @@ namespace GhostDrive
         InterruptPort _Interrupt;
         OutputPort _Disable;
         byte _TrackLocation;
+        Timer _RunawayNoteTimer;
+        const int RUNAWAY_TIMEOUT = 5000; //timeout notes after 5 seconds
+
 
         public int OctaveModulation { get; set; }
 
@@ -30,6 +33,10 @@ namespace GhostDrive
         /// <param name="trackLocation"></param>
         public FloppySynth(FEZ_Pin.Digital disablePin, PWM.Pin stepPin, FEZ_Pin.Digital interruptPin, FEZ_Pin.Digital dirPin, byte trackLocation)
         {
+            _RunawayNoteTimer = new Timer((o) =>
+            {
+                StopNote();
+            }, null, -1, -1);
             var dirState = false;
             _Interrupt = new InterruptPort((Cpu.Pin)interruptPin, false, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeHigh);
             _Step = new PWM(stepPin);
@@ -120,6 +127,8 @@ namespace GhostDrive
             var nanoseconds = (uint)(period * 1000000000);
             //TODO: what's the right configuration for the pulse to make the direction interrupt stable?
             _Step.SetPulse(nanoseconds, nanoseconds - 10000 /*10 microseconds */);
+            //start the runaway note timer
+            _RunawayNoteTimer.Change(RUNAWAY_TIMEOUT, -1);
         }
 
         /// <summary>
@@ -128,6 +137,8 @@ namespace GhostDrive
         public void StopNote()
         {
             _Step.Set(true);
+            //cancel the runaway note timer
+            _RunawayNoteTimer.Change(-1, -1);
         }
 
         /// <summary>

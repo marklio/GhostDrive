@@ -164,7 +164,7 @@ namespace GhostDrive
 					_RemoteSynth.Enable();
 
 					while (!_Song.Play()) // Handle pauses correctly
-						Thread.Yield();
+						Thread.Sleep(20);
 
 					_LocalSynth.Disable();
 					_RemoteSynth.Disable();
