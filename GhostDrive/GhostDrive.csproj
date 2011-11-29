@@ -45,9 +45,6 @@
     <Compile Include="..\CommonSource\PriorityQueue.cs">
       <Link>PriorityQueue.cs</Link>
     </Compile>
-    <Compile Include="MIDIFileParser.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="RemoteManager.cs" />
