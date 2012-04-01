@@ -2,6 +2,7 @@ using System;
 using Microsoft.SPOT;
 using System.IO.Ports;
 using System.Threading;
+using XBee;
 
 namespace GhostDrive
 {
@@ -16,139 +17,154 @@ namespace GhostDrive
     /// </remarks>
     class RemoteManager
     {
-        SerialPort _Port;
+        //SerialPort _Port;
         byte[] _SendBuffer = new byte[] { 0x65, 0, 0 }; //magic, type, data
         byte[] _ReceiveBuffer = new byte[3];
-        Thread _ReadThread;
+        //Thread _ReadThread;
+        XBeeDevice xbee;
 
+        public XBeeDevice XBee { get { return xbee; } }
+
+        public delegate void NoteOnHandler(byte note);
+        public delegate void NoteOffHandler();
+        public delegate void EnableHandler();
+        public delegate void DisableHandler();
+        public delegate void SetModulationHandler(sbyte modulation);
+        public delegate void SetLocationHandler(byte location);
+        public delegate void ResetLocationHandler();
         public delegate void PlaySongHandler(byte songNumber);
         public delegate void StopSongHandler();
+        public delegate void SaveSongHandler(byte songNumber);
+        public delegate void RandomWalkHandler(int seed);
 
+        public event NoteOnHandler OnNoteOn;
+        public event NoteOffHandler OnNoteOff;
+        public event EnableHandler OnEnable;
+        public event DisableHandler OnDisable;
+        public event SetModulationHandler OnSetModulation;
+        public event SetLocationHandler OnSetLocation;
+        public event ResetLocationHandler OnResetLocation;
         public event PlaySongHandler OnPlaySong;
         public event StopSongHandler OnStopSong;
+        public event SaveSongHandler OnSaveSong;
+        public event RandomWalkHandler OnRandomWalk;
 
         public RemoteManager(SerialPort serialPort)
         {
-            _Port = serialPort;
-            if (!_Port.IsOpen) _Port.Open();
-            _ReadThread = new Thread(() =>
-            {
-                var readBuffer = new byte[3];
-                while (true)
-                {
-                    if (_Port.BytesToRead >= 3)
-                    {
-                        _Port.Read(readBuffer, 0, 3);
-                        if (readBuffer[0] != 0x65)
-                        {
-                            _Port.Read(readBuffer, 0, 1);
-                            continue;
-                        }
-                        switch ((FrameType)readBuffer[1])
-                        {
-                            case FrameType.PlaySong:
-                                var songNumber = readBuffer[2];
-                                PlaySong(songNumber);
-                                break;
-                            case FrameType.StopSong:
-                                StopSong();
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        Thread.Sleep(50);
-                    }
+            xbee = new XBeeDevice(serialPort);
+            xbee.FrameReceived += frame => {
+                if (frame.CommandId != CommandId.RxPacket)
+                    return false;
+
+                var buffer = frame.Buffer;
+                if (buffer[11] != 0x65)
+                    return false;
+
+                switch ((FrameType)buffer[12]) {
+                case FrameType.NoteOn:
+                    NoteOn(buffer[13]);
+                    break;
+                case FrameType.NoteOff:
+                    NoteOff();
+                    break;
+                case FrameType.Enable:
+                    Enable();
+                    break;
+                case FrameType.Disable:
+                    Disable();
+                    break;
+                case FrameType.SetModulation:
+                    SetModulation((sbyte)buffer[13]);
+                    break;
+                case FrameType.SetLocation:
+                    SetLocation(buffer[13]);
+                    break;
+                case FrameType.ResetLocation:
+                    ResetLocation();
+                    break;
+                case FrameType.PlaySong:
+                    PlaySong(buffer[13]);
+                    break;
+                case FrameType.StopSong:
+                    StopSong();
+                    break;
+                case FrameType.SaveSong:
+                    SaveSong(buffer[13]);
+                    break;
+                case FrameType.RandomWalk:
+                    var seed = buffer[13] << 24 | buffer[14] << 16 | buffer[15] << 8 | buffer[16];
+                    RandomWalk(seed);
+                    break;
                 }
-            });
-            _ReadThread.Start();
+                return true;
+            };
+            xbee.Open();
         }
 
-        private void StopSong()
-        {
-            var onStopSong = OnStopSong;
-            if (onStopSong != null) onStopSong();
+        void NoteOn(byte note) {
+            var onNoteOn = OnNoteOn;
+            if (onNoteOn != null)
+                onNoteOn(note);
         }
 
-        private void PlaySong(byte songNumber)
-        {
+        void NoteOff() {
+            var onNoteOff = OnNoteOff;
+            if (onNoteOff != null)
+                onNoteOff();
+        }
+
+        void Enable() {
+            var onEnable = OnEnable;
+            if (onEnable != null)
+                onEnable();
+        }
+
+        void Disable() {
+            var onDisable = OnDisable;
+            if (onDisable != null)
+                onDisable();
+        }
+
+        void SetModulation(sbyte modulation) {
+            var onSetModulation = OnSetModulation;
+            if (onSetModulation != null)
+                onSetModulation(modulation);
+        }
+
+        void SetLocation(byte location) {
+            var onSetLocation = OnSetLocation;
+            if (onSetLocation != null)
+                onSetLocation(location);
+        }
+
+        void ResetLocation() {
+            var onResetLocation = OnResetLocation;
+            if (onResetLocation != null)
+                onResetLocation();
+        }
+
+        void PlaySong(byte songNumber) {
             var onPlaySong = OnPlaySong;
-            if (onPlaySong != null) onPlaySong(songNumber);
+            if (onPlaySong != null)
+                onPlaySong(songNumber);
         }
 
-        void SendFrame(FrameType type)
-        {
-            SendFrame(type, 0);
+        void StopSong() {
+            var onStopSong = OnStopSong;
+            if (onStopSong != null)
+                onStopSong();
         }
 
-        void SendFrame(FrameType type, byte data)
-        {
-            _SendBuffer[1] = (byte)type;
-            _SendBuffer[2] = data;
-            _Port.Write(_SendBuffer, 0, 3);
+        void SaveSong(byte songNumber) {
+            var onSaveSong = OnSaveSong;
+            if (onSaveSong != null)
+                onSaveSong(songNumber);
         }
 
-        IFloppySynth _RemoteSynth;
-        public IFloppySynth RemoteSynth
-        {
-            get
-            {
-                return _RemoteSynth ?? (_RemoteSynth = new RemoteFloppySynth(this));
-            }
-        }
-
-        class RemoteFloppySynth : IFloppySynth
-        {
-            RemoteManager _Manager;
-            public RemoteFloppySynth(RemoteManager manager)
-            {
-                _Manager = manager;
-            }
-
-            int _OctaveModulation = 0;
-            public int OctaveModulation
-            {
-                get { return _OctaveModulation; }
-                set { SetOctaveModulation(value); }
-            }
-
-            private void SetOctaveModulation(int octaveModulation)
-            {
-                _OctaveModulation = octaveModulation;
-                //TODO: under/overflow?
-                _Manager.SendFrame(FrameType.SetModulation, (byte)octaveModulation);
-            }
-
-            public void ResetLocation()
-            {
-                _Manager.SendFrame(FrameType.ResetLocation);
-            }
-
-            public void SetLocation(byte trackLocation)
-            {
-                _Manager.SendFrame(FrameType.SetLocation, trackLocation);
-            }
-
-            public void Enable()
-            {
-                _Manager.SendFrame(FrameType.Enable);
-            }
-
-            public void Disable()
-            {
-                _Manager.SendFrame(FrameType.Disable);
-            }
-
-            public void PlayNote(int note)
-            {
-                //TODO: overflow?
-                _Manager.SendFrame(FrameType.NoteOn, (byte)note);
-            }
-
-            public void StopNote()
-            {
-                _Manager.SendFrame(FrameType.NoteOff);
-            }
+        void RandomWalk(int seed) {
+            var onRandomWalk = OnRandomWalk;
+            if (onRandomWalk != null)
+                onRandomWalk(seed);
         }
     }
 }

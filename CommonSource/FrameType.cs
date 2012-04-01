@@ -17,5 +17,7 @@ namespace GhostDrive
         ResetLocation = 0x22,
         PlaySong = 0x30,
         StopSong = 0x31,
+        SaveSong = 0x32,
+        RandomWalk = 0x33,
     }
 }

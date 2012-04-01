@@ -2,14 +2,6 @@
 using System.Collections;
 using System.IO;
 
-#region This is inane
-#if DEVICE
-namespace System.Runtime.CompilerServices {
-	public sealed class ExtensionAttribute : Attribute {}
-}
-#endif
-#endregion
-
 namespace Midi {
 #region Helpers
 	// See StreamExtensions
